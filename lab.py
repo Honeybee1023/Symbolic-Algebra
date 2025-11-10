@@ -17,34 +17,36 @@ Symbolic Algebra
 class Expr:
     def __add__(self, other):
         return Add(self, other)
-    
+
     def __radd__(self, other):
-        return Add(other, self) 
-    
+        return Add(other, self)
+
     def __sub__(self, other):
         return Sub(self, other)
-    
+
     def __rsub__(self, other):
         return Sub(other, self)
-    
+
     def __mul__(self, other):
         return Mul(self, other)
-    
+
     def __rmul__(self, other):
         return Mul(other, self)
-    
+
     def __truediv__(self, other):
         return Div(self, other)
-    
+
     def __rtruediv__(self, other):
         return Div(other, self)
+
 
 class BinOp(Expr):
     """
     Parent class for binary operations (operations with left and right operands).
     """
-    #Since all the subclasses use the same init function, we can 
-    #just define it in the parent class
+
+    # Since all the subclasses use the same init function, we can
+    # just define it in the parent class
     def __init__(self, left, right):
         """
         Initializer.  Store instance variables called `left` and `right`,
@@ -69,6 +71,7 @@ class BinOp(Expr):
 
     precedence = 0
 
+
 class Add(BinOp):
     precedence = 1
 
@@ -77,7 +80,7 @@ class Add(BinOp):
 
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) + self.right.evaluate(mapping)
-    
+
     def deriv(self, var):
         return self.left.deriv(var) + self.right.deriv(var)
 
@@ -92,6 +95,7 @@ class Add(BinOp):
             return Num(left.n + right.n)
         return left + right
 
+
 class Sub(BinOp):
     precedence = 1
 
@@ -104,7 +108,7 @@ class Sub(BinOp):
 
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) - self.right.evaluate(mapping)
-    
+
     def deriv(self, var):
         return self.left.deriv(var) - self.right.deriv(var)
 
@@ -116,9 +120,11 @@ class Sub(BinOp):
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n - right.n)
         return left - right
-    
+
+
 class Mul(BinOp):
     precedence = 2
+
     def __str__(self):
         if self.left.precedence < self.precedence:
             left_str = "(" + str(self.left) + ")"
@@ -129,7 +135,7 @@ class Mul(BinOp):
         else:
             right_str = str(self.right)
         return f"{left_str} * {right_str}"
-    
+
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) * self.right.evaluate(mapping)
 
@@ -149,8 +155,10 @@ class Mul(BinOp):
             return Num(left.n * right.n)
         return left * right
 
+
 class Div(BinOp):
     precedence = 2
+
     def __str__(self):
         if self.left.precedence < self.precedence:
             left_str = "(" + str(self.left) + ")"
@@ -166,10 +174,12 @@ class Div(BinOp):
         return self.left.evaluate(mapping) / self.right.evaluate(mapping)
 
     def deriv(self, var):
-        numerator = (self.left.deriv(var) * self.right) - (self.left * self.right.deriv(var))
+        numerator = (self.left.deriv(var) * self.right) - (
+            self.left * self.right.deriv(var)
+        )
         denominator = self.right * self.right
         return numerator / denominator
-    
+
     def simplify(self):
         left = self.left.simplify()
         right = self.right.simplify()
@@ -180,6 +190,7 @@ class Div(BinOp):
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n / right.n)
         return left / right
+
 
 class Var(Expr):
     def __init__(self, name):
@@ -199,21 +210,23 @@ class Var(Expr):
         if isinstance(other, Var):
             return self.name == other.name
         return False
-    
+
     precedence = 3
 
     def evaluate(self, mapping):
         if self.name in mapping:
             return mapping[self.name]
         else:
-            raise SymbolicEvaluationError(f"Variable '{self.name}' not found in mapping.")      
+            raise SymbolicEvaluationError(
+                f"Variable '{self.name}' not found in mapping."
+            )
 
     def deriv(self, var):
         if self.name == var:
             return Num(1)
         else:
             return Num(0)
-    
+
     def simplify(self):
         return self
 
@@ -248,12 +261,15 @@ class Num(Expr):
     def simplify(self):
         return self
 
+
 class SymbolicEvaluationError(Exception):
     """
     An expression indicating that something has gone wrong when evaluating a
     symbolic algebra expression.
     """
+
     pass
+
 
 def tokenize(string):
     """
@@ -265,11 +281,15 @@ def tokenize(string):
     prev_ch = None
     for ch in string:
         # allow leading '-' as part of number when at start or after '(' or operator
-        if ch == '-' and current_number == "" and (prev_ch is None or prev_ch in '(+ -*/'):
+        if (
+            ch == "-"
+            and current_number == ""
+            and (prev_ch is None or prev_ch in "(+ -*/")
+        ):
             current_number += ch
         elif ch.isdigit():
             current_number += ch
-        elif ch == '.' and not has_dot and current_number != "":
+        elif ch == "." and not has_dot and current_number != "":
             # only allow max one decimal point inside a number
             current_number += ch
             has_dot = True
@@ -284,6 +304,7 @@ def tokenize(string):
     if current_number != "":
         tokens.append(current_number)
     return tokens
+
 
 def parse(tokens):
     """
@@ -304,7 +325,7 @@ def parse(tokens):
 
         # try to parse as integer first, then float
         try:
-            #first try int conversion
+            # first try int conversion
             if token.isdigit():
                 return Num(int(token)), index + 1
             # then try float conversion
@@ -318,29 +339,31 @@ def parse(tokens):
             return Var(token), index + 1
 
         # Otherwise ( E1 op E2 )
-        if token != '(':
+        if token != "(":
             raise ValueError(f"Unexpected token at {index}: {token}")
 
         # parse left expression starting after '('
         left_expr, next_index = parse_expression(index + 1)
 
         op_token = tokens[next_index]
-        if op_token not in ['+', '-', '*', '/']:
+        if op_token not in ["+", "-", "*", "/"]:
             raise ValueError(f"Expected operator at {next_index}, got {op_token}")
 
         # parse right expression after operator
         right_expr, next_index2 = parse_expression(next_index + 1)
 
         # next token must be ')'
-        if tokens[next_index2] != ')':
-            raise ValueError(f"Expected ')' at {next_index2}, got {tokens[next_index2]}")
+        if tokens[next_index2] != ")":
+            raise ValueError(
+                f"Expected ')' at {next_index2}, got {tokens[next_index2]}"
+            )
 
         # make BinOp
-        if op_token == '+':
+        if op_token == "+":
             node = Add(left_expr, right_expr)
-        elif op_token == '-':
+        elif op_token == "-":
             node = Sub(left_expr, right_expr)
-        elif op_token == '*':
+        elif op_token == "*":
             node = Mul(left_expr, right_expr)
         else:
             node = Div(left_expr, right_expr)
@@ -350,15 +373,17 @@ def parse(tokens):
     parsed_expression, next_index = parse_expression(0)
     return parsed_expression
 
+
 def make_expression(string):
     tokens = tokenize(string)
     return parse(tokens)
 
+
 if __name__ == "__main__":
-    #Tests:
+    # Tests:
     print(tokenize(" (x + -3.0) * y / 21 "))
     print(repr(parse(tokenize("3"))))
     print(repr(parse(tokenize("x"))))
     print(repr(parse(tokenize("(1+2)"))))
     print(repr(parse(tokenize("(x*(y+1))"))))
-    print(repr(make_expression('(x * (2 + 3))')))
+    print(repr(make_expression("(x * (2 + 3))")))
