@@ -90,7 +90,7 @@ class Add(BinOp):
             return left
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n + right.n)
-        return self.left.simplify() + self.right.simplify()
+        return left + right
 
 class Sub(BinOp):
     precedence = 1
@@ -115,7 +115,7 @@ class Sub(BinOp):
             return left
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n - right.n)
-        return self.left.simplify() - self.right.simplify()
+        return left - right
     
 class Mul(BinOp):
     precedence = 2
@@ -147,7 +147,7 @@ class Mul(BinOp):
             return left
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n * right.n)
-        return self.left.simplify() * self.right.simplify()
+        return left * right
 
 class Div(BinOp):
     precedence = 2
@@ -179,7 +179,7 @@ class Div(BinOp):
             return left
         if isinstance(left, Num) and isinstance(right, Num):
             return Num(left.n / right.n)
-        return self.left.simplify() / self.right.simplify()
+        return left / right
 
 class Var(Expr):
     def __init__(self, name):
