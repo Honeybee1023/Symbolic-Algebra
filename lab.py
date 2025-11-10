@@ -262,8 +262,12 @@ def tokenize(string):
     tokens = []
     current_number = ""
     has_dot = False
+    prev_ch = None
     for ch in string:
-        if ch.isdigit():
+        # allow leading '-' as part of number when at start or after '(' or operator
+        if ch == '-' and current_number == "" and (prev_ch is None or prev_ch in '(+ -*/'):
+            current_number += ch
+        elif ch.isdigit():
             current_number += ch
         elif ch == '.' and not has_dot and current_number != "":
             # only allow max one decimal point inside a number
@@ -276,6 +280,7 @@ def tokenize(string):
                 has_dot = False
             if ch.strip() != "":
                 tokens.append(ch)
+        prev_ch = ch
     if current_number != "":
         tokens.append(current_number)
     return tokens
@@ -351,7 +356,7 @@ def make_expression(string):
 
 if __name__ == "__main__":
     #Tests:
-    print(tokenize(" (x + 3.0) * y / 21 "))
+    print(tokenize(" (x + -3.0) * y / 21 "))
     print(repr(parse(tokenize("3"))))
     print(repr(parse(tokenize("x"))))
     print(repr(parse(tokenize("(1+2)"))))
