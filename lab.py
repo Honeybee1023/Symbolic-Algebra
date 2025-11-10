@@ -81,6 +81,17 @@ class Add(BinOp):
     def deriv(self, var):
         return self.left.deriv(var) + self.right.deriv(var)
 
+    def simplify(self):
+        left = self.left.simplify()
+        right = self.right.simplify()
+        if left == Num(0):
+            return right
+        if right == Num(0):
+            return left
+        if isinstance(left, Num) and isinstance(right, Num):
+            return Num(left.n + right.n)
+        return self.left.simplify() + self.right.simplify()
+
 class Sub(BinOp):
     precedence = 1
 
@@ -96,6 +107,15 @@ class Sub(BinOp):
     
     def deriv(self, var):
         return self.left.deriv(var) - self.right.deriv(var)
+
+    def simplify(self):
+        left = self.left.simplify()
+        right = self.right.simplify()
+        if right == Num(0):
+            return left
+        if isinstance(left, Num) and isinstance(right, Num):
+            return Num(left.n - right.n)
+        return self.left.simplify() - self.right.simplify()
     
 class Mul(BinOp):
     precedence = 2
@@ -115,6 +135,19 @@ class Mul(BinOp):
 
     def deriv(self, var):
         return (self.left.deriv(var) * self.right) + (self.left * self.right.deriv(var))
+
+    def simplify(self):
+        left = self.left.simplify()
+        right = self.right.simplify()
+        if left == Num(0) or right == Num(0):
+            return Num(0)
+        if left == Num(1):
+            return right
+        if right == Num(1):
+            return left
+        if isinstance(left, Num) and isinstance(right, Num):
+            return Num(left.n * right.n)
+        return self.left.simplify() * self.right.simplify()
 
 class Div(BinOp):
     precedence = 2
@@ -136,6 +169,17 @@ class Div(BinOp):
         numerator = (self.left.deriv(var) * self.right) - (self.left * self.right.deriv(var))
         denominator = self.right * self.right
         return numerator / denominator
+    
+    def simplify(self):
+        left = self.left.simplify()
+        right = self.right.simplify()
+        if left == Num(0):
+            return Num(0)
+        if right == Num(1):
+            return left
+        if isinstance(left, Num) and isinstance(right, Num):
+            return Num(left.n / right.n)
+        return self.left.simplify() / self.right.simplify()
 
 class Var(Expr):
     def __init__(self, name):
@@ -150,6 +194,11 @@ class Var(Expr):
 
     def __repr__(self):
         return f"Var('{self.name}')"
+
+    def __eq__(self, other):
+        if isinstance(other, Var):
+            return self.name == other.name
+        return False
     
     precedence = 3
 
@@ -164,6 +213,9 @@ class Var(Expr):
             return Num(1)
         else:
             return Num(0)
+    
+    def simplify(self):
+        return self
 
 
 class Num(Expr):
@@ -179,14 +231,22 @@ class Num(Expr):
 
     def __repr__(self):
         return f"Num({self.n})"
-    
-    precedence = 3
+
+    def __eq__(self, other):
+        if isinstance(other, Num):
+            return self.n == other.n
+        return False
+
+    precedence = 4
 
     def evaluate(self, mapping):
         return self.n
 
     def deriv(self, var):
         return Num(0)
+
+    def simplify(self):
+        return self
 
 class SymbolicEvaluationError(Exception):
     """
