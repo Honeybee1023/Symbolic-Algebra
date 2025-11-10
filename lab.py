@@ -18,6 +18,9 @@ class Expr:
     pass
 
 class BinOp(Expr):
+    """
+    Parent class for binary operations (operations with left and right operands).
+    """
     #Since all the subclasses use the same init function, we can 
     #just define it in the parent class
     def __init__(self, left, right):
@@ -25,36 +28,38 @@ class BinOp(Expr):
         Initializer.  Store instance variables called `left` and `right`,
         containing the values passed in to the initializer.
         """
-        self.left = left
-        self.right = right
+        if type(left) in [int, float]:
+            self.left = Num(left)
+        elif type(left) == str:
+            self.left = Var(left)
+        else:
+            self.left = left
+
+        if type(right) in [int, float]:
+            self.right = Num(right)
+        elif type(right) == str:
+            self.right = Var(right)
+        else:
+            self.right = right
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self.left)}, {repr(self.right)})"
 
 class Add(BinOp):
     def __str__(self):
         return f"({self.left} + {self.right})"
 
-    def __repr__(self):
-        return f"Add({repr(self.left)}, {repr(self.right)})"
-
 class Sub(BinOp):
     def __str__(self):
         return f"({self.left} - {self.right})"
-
-    def __repr__(self):
-        return f"Sub({repr(self.left)}, {repr(self.right)})"
     
 class Mul(BinOp):
     def __str__(self):
         return f"({self.left} * {self.right})"
 
-    def __repr__(self):
-        return f"Mul({repr(self.left)}, {repr(self.right)})"
-
 class Div(BinOp):
     def __str__(self):
         return f"({self.left} / {self.right})"
-
-    def __repr__(self):
-        return f"Div({repr(self.left)}, {repr(self.right)})"
 
 class Var(Expr):
     def __init__(self, name):
