@@ -255,6 +255,105 @@ class SymbolicEvaluationError(Exception):
     """
     pass
 
+def tokenize(string):
+    """
+    Each string character is a token. Each full number is a token.
+    """
+    tokens = []
+    current_number = ""
+    has_dot = False
+    for ch in string:
+        if ch.isdigit():
+            current_number += ch
+        elif ch == '.' and not has_dot and current_number != "":
+            # only allow max one decimal point inside a number
+            current_number += ch
+            has_dot = True
+        else:
+            if current_number != "":
+                tokens.append(current_number)
+                current_number = ""
+                has_dot = False
+            if ch.strip() != "":
+                tokens.append(ch)
+    if current_number != "":
+        tokens.append(current_number)
+    return tokens
+
+def parse(tokens):
+    """
+    Parse a list of tokens and return the parsed expression.
+
+    >>> repr(parse(tokenize("3")))
+    'Num(3)'
+    >>> repr(parse(tokenize("x")))
+    "Var('x')"
+    >>> repr(parse(tokenize("(1+2)")))
+    'Add(Num(1), Num(2))'
+    >>> repr(parse(tokenize("(x*(y+1))")))
+    "Mul(Var('x'), Add(Var('y'), Num(1)))"
+    """
+
+    def parse_expression(index):
+        token = tokens[index]
+
+        # try to parse as integer first, then float
+        try:
+            #first try int conversion
+            if token.isdigit():
+                return Num(int(token)), index + 1
+            # then try float conversion
+            num = float(token)
+            return Num(num), index + 1
+        except Exception:
+            pass
+
+        # parse single alphabetic character as variable
+        if len(token) == 1 and token.isalpha():
+            return Var(token), index + 1
+
+        # Otherwise ( E1 op E2 )
+        if token != '(':
+            raise ValueError(f"Unexpected token at {index}: {token}")
+
+        # parse left expression starting after '('
+        left_expr, next_index = parse_expression(index + 1)
+
+        op_token = tokens[next_index]
+        if op_token not in ['+', '-', '*', '/']:
+            raise ValueError(f"Expected operator at {next_index}, got {op_token}")
+
+        # parse right expression after operator
+        right_expr, next_index2 = parse_expression(next_index + 1)
+
+        # next token must be ')'
+        if tokens[next_index2] != ')':
+            raise ValueError(f"Expected ')' at {next_index2}, got {tokens[next_index2]}")
+
+        # make BinOp
+        if op_token == '+':
+            node = Add(left_expr, right_expr)
+        elif op_token == '-':
+            node = Sub(left_expr, right_expr)
+        elif op_token == '*':
+            node = Mul(left_expr, right_expr)
+        else:
+            node = Div(left_expr, right_expr)
+
+        return node, next_index2 + 1
+
+    parsed_expression, next_index = parse_expression(0)
+    return parsed_expression
+
+def make_expression(string):
+    tokens = tokenize(string)
+    return parse(tokens)
 
 if __name__ == "__main__":
-    pass
+    #Tests:
+    print(tokenize(" (x + 3.0) * y / 21 "))
+    print(repr(parse(tokenize("3"))))
+    print(repr(parse(tokenize("x"))))
+    print(repr(parse(tokenize("(1+2)"))))
+    print(repr(parse(tokenize("(x*(y+1))"))))
+    print(repr(make_expression('(x * (2 + 3))')))
