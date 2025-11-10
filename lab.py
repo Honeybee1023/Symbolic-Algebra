@@ -77,6 +77,9 @@ class Add(BinOp):
 
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) + self.right.evaluate(mapping)
+    
+    def deriv(self, var):
+        return self.left.deriv(var) + self.right.deriv(var)
 
 class Sub(BinOp):
     precedence = 1
@@ -90,6 +93,9 @@ class Sub(BinOp):
 
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) - self.right.evaluate(mapping)
+    
+    def deriv(self, var):
+        return self.left.deriv(var) - self.right.deriv(var)
     
 class Mul(BinOp):
     precedence = 2
@@ -107,6 +113,9 @@ class Mul(BinOp):
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) * self.right.evaluate(mapping)
 
+    def deriv(self, var):
+        return (self.left.deriv(var) * self.right) + (self.left * self.right.deriv(var))
+
 class Div(BinOp):
     precedence = 2
     def __str__(self):
@@ -122,6 +131,11 @@ class Div(BinOp):
 
     def evaluate(self, mapping):
         return self.left.evaluate(mapping) / self.right.evaluate(mapping)
+
+    def deriv(self, var):
+        numerator = (self.left.deriv(var) * self.right) - (self.left * self.right.deriv(var))
+        denominator = self.right * self.right
+        return numerator / denominator
 
 class Var(Expr):
     def __init__(self, name):
@@ -145,6 +159,12 @@ class Var(Expr):
         else:
             raise SymbolicEvaluationError(f"Variable '{self.name}' not found in mapping.")      
 
+    def deriv(self, var):
+        if self.name == var:
+            return Num(1)
+        else:
+            return Num(0)
+
 
 class Num(Expr):
     def __init__(self, n):
@@ -164,6 +184,9 @@ class Num(Expr):
 
     def evaluate(self, mapping):
         return self.n
+
+    def deriv(self, var):
+        return Num(0)
 
 class SymbolicEvaluationError(Exception):
     """
