@@ -45,21 +45,48 @@ class BinOp(Expr):
     def __repr__(self):
         return f"{self.__class__.__name__}({repr(self.left)}, {repr(self.right)})"
 
+    precedence = 0
+
 class Add(BinOp):
+    precedence = 1
     def __str__(self):
-        return f"({self.left} + {self.right})"
+        return f"{self.left} + {self.right}"
 
 class Sub(BinOp):
+    precedence = 1
     def __str__(self):
-        return f"({self.left} - {self.right})"
+        if self.right.precedence == self.precedence:
+            right_str = "(" + str(self.right) + ")"
+        else:
+            right_str = str(self.right)
+        return f"{self.left} - {right_str}"
     
 class Mul(BinOp):
+    precedence = 2
     def __str__(self):
-        return f"({self.left} * {self.right})"
+        if self.left.precedence < self.precedence:
+            left_str = "(" + str(self.left) + ")"
+        else:
+            left_str = str(self.left)
+        if self.right.precedence < self.precedence:
+            right_str = "(" + str(self.right) + ")"
+        else:
+            right_str = str(self.right)
+        return f"{left_str} * {right_str}"
+
 
 class Div(BinOp):
+    precedence = 2
     def __str__(self):
-        return f"({self.left} / {self.right})"
+        if self.left.precedence < self.precedence:
+            left_str = "(" + str(self.left) + ")"
+        else:
+            left_str = str(self.left)
+        if self.right.precedence <= self.precedence:
+            right_str = "(" + str(self.right) + ")"
+        else:
+            right_str = str(self.right)
+        return f"{left_str} / {right_str}"
 
 class Var(Expr):
     def __init__(self, name):
@@ -74,6 +101,8 @@ class Var(Expr):
 
     def __repr__(self):
         return f"Var('{self.name}')"
+    
+    precedence = 3
 
 
 class Num(Expr):
@@ -89,6 +118,8 @@ class Num(Expr):
 
     def __repr__(self):
         return f"Num({self.n})"
+    
+    precedence = 3
 
 
 if __name__ == "__main__":
