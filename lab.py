@@ -71,17 +71,25 @@ class BinOp(Expr):
 
 class Add(BinOp):
     precedence = 1
+
     def __str__(self):
         return f"{self.left} + {self.right}"
 
+    def evaluate(self, mapping):
+        return self.left.evaluate(mapping) + self.right.evaluate(mapping)
+
 class Sub(BinOp):
     precedence = 1
+
     def __str__(self):
         if self.right.precedence == self.precedence:
             right_str = "(" + str(self.right) + ")"
         else:
             right_str = str(self.right)
         return f"{self.left} - {right_str}"
+
+    def evaluate(self, mapping):
+        return self.left.evaluate(mapping) - self.right.evaluate(mapping)
     
 class Mul(BinOp):
     precedence = 2
@@ -95,7 +103,9 @@ class Mul(BinOp):
         else:
             right_str = str(self.right)
         return f"{left_str} * {right_str}"
-
+    
+    def evaluate(self, mapping):
+        return self.left.evaluate(mapping) * self.right.evaluate(mapping)
 
 class Div(BinOp):
     precedence = 2
@@ -109,6 +119,9 @@ class Div(BinOp):
         else:
             right_str = str(self.right)
         return f"{left_str} / {right_str}"
+
+    def evaluate(self, mapping):
+        return self.left.evaluate(mapping) / self.right.evaluate(mapping)
 
 class Var(Expr):
     def __init__(self, name):
@@ -126,6 +139,12 @@ class Var(Expr):
     
     precedence = 3
 
+    def evaluate(self, mapping):
+        if self.name in mapping:
+            return mapping[self.name]
+        else:
+            raise SymbolicEvaluationError(f"Variable '{self.name}' not found in mapping.")      
+
 
 class Num(Expr):
     def __init__(self, n):
@@ -142,6 +161,16 @@ class Num(Expr):
         return f"Num({self.n})"
     
     precedence = 3
+
+    def evaluate(self, mapping):
+        return self.n
+
+class SymbolicEvaluationError(Exception):
+    """
+    An expression indicating that something has gone wrong when evaluating a
+    symbolic algebra expression.
+    """
+    pass
 
 
 if __name__ == "__main__":
